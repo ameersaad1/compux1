@@ -1,3 +1,5 @@
+pnpm install --no-frozen-lockfile
+
 lockfileVersion: '9.0'
 
 settings:
