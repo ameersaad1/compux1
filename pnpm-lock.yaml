@@ -1,7 +1,4 @@
-pnpm install --no-frozen-lockfile
-git add pnpm-lock.yaml
-git commit -m "fix: resolve pnpm lockfile version mismatch for vercel"
-git push
+
 lockfileVersion: '9.0'
 
 settings:
