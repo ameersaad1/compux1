@@ -1,3 +1,4 @@
+import { supabase } from "./supabase";
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import type { User, Post, Event, StudyGroup, DM, Notification, Resource, Report, Badge } from "./types";
 import type { Lang, View } from "./types";
