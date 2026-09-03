@@ -1,0 +1,10 @@
+{
+  "description": "Connect and engage with university peers through a vibrant social hub featuring posts, events, study groups, and real-time messaging in a sleek interface.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
