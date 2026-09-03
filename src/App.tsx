@@ -2098,6 +2098,7 @@ function Router() {
        view === "alerts" ? <AlertsView /> :
        view === "events" ? <EventsView /> :
        view === "study" ? <StudyView /> :
+        view === "groups" ? <GroupHubPage /> :
        <FeedView />
       }
     </div>
