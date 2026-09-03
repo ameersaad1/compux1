@@ -1,3 +1,4 @@
+import { GroupHubPage } from "./GroupHubPage";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { AppProvider, useApp, INITIAL_USERS, ALL_BADGES, ANALYTICS } from "./store";
 import type { User, Post, Comment, Badge, Resource, Report } from "./types";
