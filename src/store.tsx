@@ -96,7 +96,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState("");
 
   const t = T[lang];
+// ── Realtime Listener for DMs and Posts ───────────────────────────────────────
+useEffect(() => {
+  // 1. الاستماع التلقائي للرسائل المباشرة الجديدة
+  const channel = supabase
+    .channel('public-messages')
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'messages' },
+      (payload) => {
+        const newMsg = payload.new;
+        setDms((prevDms) => {
+          const senderId = newMsg.sender_id;
+          const text = newMsg.content;
+          const time = "الآن";
 
+          const existing = prevDms.find((d) => d.userId === senderId);
+          if (existing) {
+            return prevDms.map((d) =>
+              d.userId === senderId
+                ? { ...d, messages: [...d.messages, { from: senderId, text, time }] }
+                : d
+            );
+          } else {
+            return [...prevDms, { userId: senderId, messages: [{ from: senderId, text, time }], unread: 1 }];
+          }
+        });
+        showToast("رسالة جديدة أصلتك الآن!");
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
   // جلب المنشورات من Supabase عند الفتح
   const fetchSupabasePosts = useCallback(async () => {
     try {
