@@ -7,4 +7,7 @@ if (!supabaseUrl || !supabaseKey) {
   console.warn('Supabase credentials are not configured. Some features may not work.')
 }
 
-export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseKey || 'placeholder-key')
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co', 
+  supabaseKey || 'placeholder-key'
+)
