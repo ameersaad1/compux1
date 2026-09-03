@@ -243,15 +243,26 @@ useEffect(() => {
     setPosts((prev) => prev.filter((p) => p.id !== postId));
   }, []);
 
-  const sendDM = useCallback((toUserId: string, text: string) => {
-    if (!currentUser) return;
-    setDms((prev) => {
-      const msg = { from: currentUser.id, text, time: "now" };
-      const ex = prev.find((d) => d.userId === toUserId);
-      if (ex) return prev.map((d) => d.userId === toUserId ? { ...d, messages: [...d.messages, msg] } : d);
-      return [...prev, { userId: toUserId, messages: [msg], unread: 0 }];
-    });
-  }, [currentUser]);
+  const sendDM = useCallback(async (toUserId: string, text: string) => {
+  if (!currentUser) return;
+
+  // 1. التحديث المحلي السريع
+  const msg = { from: currentUser.id, text, time: "الآن" };
+  setDms((prev) => {
+    const ex = prev.find((d) => d.userId === toUserId);
+    if (ex) return prev.map((d) => d.userId === toUserId ? { ...d, messages: [...d.messages, msg] } : d);
+    return [...prev, { userId: toUserId, messages: [msg], unread: 0 }];
+  });
+
+  // 2. الحفظ في Supabase ليراه الطرف الآخر لحظياً
+  try {
+    await supabase.from('messages').insert([
+      { sender_id: currentUser.id, receiver_id: toUserId, content: text }
+    ]);
+  } catch (err) {
+    console.error("Error sending real-time message:", err);
+  }
+}, [currentUser]);
 
   const incrementDownload = useCallback((resourceId: string) => {
     setResources((prev) => prev.map((r) => r.id === resourceId ? { ...r, downloads: r.downloads + 1 } : r));
