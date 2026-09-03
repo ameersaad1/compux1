@@ -1,4 +1,40 @@
-import { supabase } from "./supabase";
+import { supabase } from './supabaseClient';
+
+// 1. جلب المنشورات الحقيقية من Supabase عند فتح التطبيق
+export async function fetchRealPosts() {
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching posts:', error);
+    return [];
+  }
+  return data;
+}
+
+// 2. دالة إضافة منشور جديد ودعمه بالصور والملفات
+export async function createNewPost(userId: string, content: string, mediaUrl?: string) {
+  const { data, error } = await supabase
+    .from('posts')
+    .insert([
+      {
+        author_id: userId,
+        content: content,
+        media_url: mediaUrl || null,
+        likes_count: 0,
+        created_at: new Date().toISOString(),
+      },
+    ])
+    .select();
+
+  if (error) {
+    console.error('Error creating post:', error);
+    return null;
+  }
+  return data[0];
+}
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import type { User, Post, Event, StudyGroup, DM, Notification, Resource, Report, Badge } from "./types";
 import type { Lang, View } from "./types";
