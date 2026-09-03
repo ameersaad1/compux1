@@ -8,10 +8,6 @@ generator client {
   previewFeatures = ["fullTextSearchPostgres"]
 }
 
-// -----------------------------------------------------------------------------
-// ENUMS
-// -----------------------------------------------------------------------------
-
 enum Role {
   STUDENT
   FACULTY
@@ -62,59 +58,41 @@ enum NotificationType {
   GROUP_INVITE
 }
 
-// -----------------------------------------------------------------------------
-// USER & IDENTITY MODELS
-// -----------------------------------------------------------------------------
-
 model User {
-  id              String         @id @default(uuid()) @db.Uuid
-  email           String         @unique
-  username        String         @unique @db.VarChar(30)
-  fullName        String         @db.VarChar(100)
-  passwordHash    String
-  avatarUrl       String?
-  coverImageUrl   String?
-  bio             String?        @db.VarChar(500)
-  universityName  String
-  graduationYear  Int
-  role            Role           @default(STUDENT)
-  isPrivate       Boolean        @default(false)
-  isVerified      Boolean        @default(false)
-  allowDM         AllowDMSetting @default(EVERYONE)
-  
-  // Security & Audit
-  isBanned        Boolean        @default(false)
-  lastLoginAt     DateTime?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  id                String            @id @default(uuid()) @db.Uuid
+  email             String            @unique
+  username          String            @unique @db.VarChar(30)
+  fullName          String            @db.VarChar(100)
+  passwordHash      String
+  avatarUrl         String?
+  coverImageUrl     String?
+  bio               String?           @db.VarChar(500)
+  universityName    String
+  graduationYear    Int
+  role              Role              @default(STUDENT)
+  isPrivate         Boolean           @default(false)
+  isVerified        Boolean           @default(false)
+  allowDM           AllowDMSetting    @default(EVERYONE)
+  isBanned          Boolean           @default(false)
+  lastLoginAt       DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  identityPublicKey String?           @db.Text
+  signedPreKey      String?           @db.Text
 
-  // E2EE Identity Keys
-  identityPublicKey String?      @db.Text
-  signedPreKey      String?      @db.Text
-
-  // Relations
   verificationBadge VerificationBadge?
   posts             Post[]
   comments          Comment[]
   likes             Like[]
-  
-  // Follower system (Self-referential M:N via Follower model)
-  following         Follower[]   @relation("UserFollowing")
-  followers         Follower[]   @relation("UserFollowers")
-
-  // Messaging Relations
-  sentMessages      DirectMessage[] @relation("MessageSender")
-  receivedMessages  DirectMessage[] @relation("MessageRecipient")
-  
+  following         Follower[]        @relation("UserFollowing")
+  followers         Follower[]        @relation("UserFollowers")
+  sentMessages      DirectMessage[]   @relation("MessageSender")
+  receivedMessages  DirectMessage[]   @relation("MessageRecipient")
   messageRequestsSent     MessageRequest[] @relation("RequestSender")
   messageRequestsReceived MessageRequest[] @relation("RequestRecipient")
-
-  // Groups & Events
   groupMemberships  GroupMember[]
-  createdGroups     Group[]        @relation("GroupCreator")
+  createdGroups     Group[]           @relation("GroupCreator")
   eventRSVPs        EventRSVP[]
-
-  // Notifications
   notificationsSent     Notification[] @relation("NotificationActor")
   notificationsReceived Notification[] @relation("NotificationRecipient")
 
@@ -154,10 +132,6 @@ model Follower {
   @@index([status])
 }
 
-// -----------------------------------------------------------------------------
-// FEED & CONTENT MODELS
-// -----------------------------------------------------------------------------
-
 model Post {
   id            String    @id @default(uuid()) @db.Uuid
   authorId      String    @db.Uuid
@@ -165,13 +139,10 @@ model Post {
   content       String    @db.Text
   mediaUrls     String[]  @default([])
   hashtags      String[]  @default([])
-  mentions      String[]  @default([]) // Stores mentioned User IDs
-  
-  // Denormalized Atomic Counters (Synced via Redis Write-Behind)
+  mentions      String[]  @default([])
   likesCount    Int       @default(0)
   commentsCount Int       @default(0)
   sharesCount   Int       @default(0)
-
   groupId       String?   @db.Uuid
   group         Group?    @relation(fields: [groupId], references: [id], onDelete: SetNull)
 
@@ -194,7 +165,6 @@ model Comment {
   authorId  String    @db.Uuid
   author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   content   String    @db.Text
-  
   parentId  String?   @db.Uuid
   parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies   Comment[] @relation("CommentReplies")
@@ -220,10 +190,6 @@ model Like {
   @@index([userId])
 }
 
-// -----------------------------------------------------------------------------
-// REAL-TIME MESSAGING & E2EE
-// -----------------------------------------------------------------------------
-
 model MessageRequest {
   id          String               @id @default(uuid()) @db.Uuid
   senderId    String               @db.Uuid
@@ -244,11 +210,8 @@ model DirectMessage {
   sender           User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
   recipientId      String   @db.Uuid
   recipient        User     @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  
-  // Encrypted Payload (Web Crypto API / Signal Protocol)
   encryptedContent String   @db.Text
   iv               String   @db.VarChar(64)
-  
   isRead           Boolean  @default(false)
   readAt           DateTime?
   createdAt        DateTime @default(now())
@@ -256,10 +219,6 @@ model DirectMessage {
   @@index([senderId, recipientId, createdAt(sort: Desc)])
   @@index([recipientId, isRead])
 }
-
-// -----------------------------------------------------------------------------
-// GROUPS & EVENTS (PESSIMISTIC CONCURRENCY)
-// -----------------------------------------------------------------------------
 
 model Group {
   id          String        @id @default(uuid()) @db.Uuid
@@ -269,7 +228,6 @@ model Group {
   isPrivate   Boolean       @default(false)
   creatorId   String        @db.Uuid
   creator     User          @relation("GroupCreator", fields: [creatorId], references: [id], onDelete: Restrict)
-  
   maxMembers  Int           @default(500)
   memberCount Int           @default(1)
 
@@ -307,7 +265,7 @@ model Event {
   startTime   DateTime
   endTime     DateTime
   capacity    Int
-  filledSeats Int         @default(0) // Safe updates via FOR UPDATE pessimistic locks
+  filledSeats Int         @default(0)
 
   rsvps       EventRSVP[]
 
@@ -331,10 +289,6 @@ model EventRSVP {
   @@index([userId])
 }
 
-// -----------------------------------------------------------------------------
-// NOTIFICATIONS
-// -----------------------------------------------------------------------------
-
 model Notification {
   id          String           @id @default(uuid()) @db.Uuid
   recipientId String           @db.Uuid
@@ -342,7 +296,7 @@ model Notification {
   actorId     String           @db.Uuid
   actor       User             @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
   type        NotificationType
-  entityId    String?          @db.Uuid // Polymorphic reference ID (Post, Comment, Event)
+  entityId    String?          @db.Uuid
   isRead      Boolean          @default(false)
   createdAt   DateTime         @default(now())
 
