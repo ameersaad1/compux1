@@ -1,4 +1,4 @@
-// تشفير وفك تشفير الرسائل على متصفح العميل (Client-Side E2EE)
+// مكتبة التشفير بين الطرفين (E2EE) المتوافقة كلياً مع متصفحات الأجهزة المحمولة والويب
 
 export async function generateAESKey(): Promise<CryptoKey> {
   return await window.crypto.subtle.generateKey(
@@ -8,9 +8,33 @@ export async function generateAESKey(): Promise<CryptoKey> {
   );
 }
 
-export async function encryptMessage(text: string, key: CryptoKey) {
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+}
+
+function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const binaryString = window.atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+export async function encryptMessage(
+  text: string,
+  key: CryptoKey
+): Promise<{ encryptedContent: string; iv: string }> {
   const encoder = new TextEncoder();
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  
   const encrypted = await window.crypto.subtle.encrypt(
     { name: 'AES-GCM', iv },
     key,
@@ -18,8 +42,8 @@ export async function encryptMessage(text: string, key: CryptoKey) {
   );
 
   return {
-    encryptedContent: Buffer.from(encrypted).toString('base64'),
-    iv: Buffer.from(iv).toString('base64'),
+    encryptedContent: arrayBufferToBase64(encrypted),
+    iv: arrayBufferToBase64(iv.buffer),
   };
 }
 
@@ -28,13 +52,13 @@ export async function decryptMessage(
   ivBase64: string,
   key: CryptoKey
 ): Promise<string> {
-  const encrypted = Buffer.from(encryptedContentBase64, 'base64');
-  const iv = Buffer.from(ivBase64, 'base64');
+  const encryptedBuffer = base64ToArrayBuffer(encryptedContentBase64);
+  const ivBuffer = base64ToArrayBuffer(ivBase64);
 
   const decrypted = await window.crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv },
+    { name: 'AES-GCM', iv: new Uint8Array(ivBuffer) },
     key,
-    encrypted
+    encryptedBuffer
   );
 
   const decoder = new TextDecoder();
