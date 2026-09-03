@@ -10,10 +10,6 @@ const prisma = new PrismaClient();
 const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// -----------------------------------------------------------------------------
-// 1. ZOD INPUT VALIDATION SCHEMAS
-// -----------------------------------------------------------------------------
-
 export const RegisterSchema = z.object({
   email: z.string().email({ message: 'يرجى إدخال بريد إلكتروني صحيح' }),
   username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/),
@@ -28,14 +24,7 @@ export const VerifyOtpSchema = z.object({
   otp: z.string().length(6),
 });
 
-// -----------------------------------------------------------------------------
-// 2. AUTHENTICATION CONTROLLER (GOOGLE SSO & EMAIL/PASSWORD)
-// -----------------------------------------------------------------------------
-
 export class AuthController {
-  /**
-   * تسجيل الدخول / إنشاء حساب باستخدام Google SSO (Gmail عادي أو بريد جامعي)
-   */
   static async authenticateWithGoogle(req: Request, res: Response, next: NextFunction) {
     try {
       const { idToken } = req.body;
@@ -60,7 +49,6 @@ export class AuthController {
         return res.status(403).json({ error: 'بريد جوجل هذا غير مفعل.' });
       }
 
-      // فحص هل البريد جامعي للتحقق من الشارة الموثقة
       const isEduEmail = email.endsWith('.edu') || email.includes('.edu.');
 
       let user = await prisma.user.findUnique({
@@ -120,16 +108,17 @@ export class AuthController {
         },
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
-  /**
-   * طلب رمز OTP مع Rate Limiting
-   */
   static async requestEmailOTP(req: Request, res: Response, next: NextFunction) {
     try {
       const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: 'البريد الإلكتروني مطلوب.' });
+      }
+
       const rateLimitKey = `otp_ratelimit:${email}`;
       const attempts = await redis.incr(rateLimitKey);
 
@@ -152,13 +141,10 @@ export class AuthController {
         message: 'تم إرسال رمز التحقق بنجاح إلى بريدك الإلكتروني.',
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
-  /**
-   * التسجيل التقليدي بواسطة البريد وكلمة السر
-   */
   static async registerUser(req: Request, res: Response, next: NextFunction) {
     try {
       const validatedData = RegisterSchema.parse(req.body);
@@ -205,14 +191,10 @@ export class AuthController {
         user: { id: newUser.id, username: newUser.username, email: newUser.email },
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 }
-
-// -----------------------------------------------------------------------------
-// 3. PRIVACY & IDOR PROTECTION MIDDLEWARE
-// -----------------------------------------------------------------------------
 
 export interface AuthenticatedRequest extends Request {
   user?: { userId: string; role: string };
@@ -265,8 +247,8 @@ export async function authorizePrivateProfileAccess(
       }
     }
 
-    next();
+    return next();
   } catch (error) {
-    next(error);
+    return next(error);
   }
 }
