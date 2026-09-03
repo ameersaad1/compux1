@@ -3,10 +3,6 @@
 import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
 import Head from 'next/head';
 
-// -----------------------------------------------------------------------------
-// 1. TWO-PASS RENDERING & HYDRATION ERROR BOUNDARY
-// -----------------------------------------------------------------------------
-
 interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
@@ -33,7 +29,7 @@ export class GranularErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
       return (
         this.props.fallback || (
           <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm my-2 text-center">
-            تعذر تحميل هذا العنصر حالياً.
+            تعذر تحميل هذا الجزء حالياً.
           </div>
         )
       );
@@ -41,10 +37,6 @@ export class GranularErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
     return this.props.children;
   }
 }
-
-// -----------------------------------------------------------------------------
-// 2. CONTEXTUAL SCROLL HOOK (AUTO-HIDE NAVIGATION)
-// -----------------------------------------------------------------------------
 
 function useScrollDirection() {
   const [scrollDirection, setScrollDirection] = useState<'up' | 'down'>('up');
@@ -61,16 +53,12 @@ function useScrollDirection() {
       lastScrollY = scrollY > 0 ? scrollY : 0;
     };
 
-    window.addEventListener('scroll', updateScrollDirection);
+    window.addEventListener('scroll', updateScrollDirection, { passive: true });
     return () => window.removeEventListener('scroll', updateScrollDirection);
   }, [scrollDirection]);
 
   return scrollDirection;
 }
-
-// -----------------------------------------------------------------------------
-// 3. MAIN LAYOUT COMPONENT
-// -----------------------------------------------------------------------------
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -85,7 +73,6 @@ export default function AppLayout({
   activeTab = 'home',
   onTabChange,
 }: AppLayoutProps) {
-  // منع أخطاء Hydration عبر Two-Pass Engine
   const [isMounted, setIsMounted] = useState(false);
   const scrollDirection = useScrollDirection();
 
@@ -95,15 +82,12 @@ export default function AppLayout({
 
   return (
     <>
-      {/* 1. إصلاح عنوان الصفحة الديناميكي وإزالة الشوائب */}
       <Head>
         <title>{title}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </Head>
 
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
-        
-        {/* Top Header with Glassmorphism */}
         <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-slate-950/75 backdrop-blur-md transition-all duration-300">
           <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -113,22 +97,19 @@ export default function AppLayout({
             </div>
 
             <div className="flex items-center gap-4">
-              <button className="p-2 rounded-full hover:bg-slate-800/60 transition-colors">
-                <span className="sr-only">الإشعارات</span>
+              <button className="p-2 rounded-full hover:bg-slate-800/60 transition-colors" aria-label="الإشعارات">
                 🔔
               </button>
             </div>
           </div>
         </header>
 
-        {/* Main Content Area */}
         <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6 mb-20 md:mb-6">
           <GranularErrorBoundary>
             {isMounted ? children : <div className="animate-pulse bg-slate-900 rounded-xl h-96 w-full" />}
           </GranularErrorBoundary>
         </main>
 
-        {/* Bottom Navigation with Safe-Area Insets & Contextual Auto-Hide */}
         <nav
           className={`fixed bottom-0 left-0 right-0 z-50 border-t border-slate-800/80 bg-slate-950/80 backdrop-blur-md transition-transform duration-300 ease-in-out md:hidden ${
             scrollDirection === 'down' ? 'translate-y-full' : 'translate-y-0'
