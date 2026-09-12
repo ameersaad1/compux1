@@ -42,8 +42,6 @@ export function PostOptionsMenu({ post, onClose }: { post: Post; onClose: () => 
     </div>
   );
 }
-EOF
-echo "PostOptionsMenu written"
-Output
+
 
 PostOptionsMenu written
