@@ -1,4 +1,4 @@
-cat > /home/claude/compux/src/components/modals/CommentsModal.tsx << 'EOF'
+
 import { useState, useRef, useEffect } from "react";
 import { useApp } from "../../store";
 import { Av, VerBadge, EmptyState } from "../primitives";
@@ -110,8 +110,4 @@ export function CommentsModal({ post, onClose }: { post: Post; onClose: () => vo
     </div>
   );
 }
-EOF
-echo "CommentsModal written"
-Output
 
-CommentsModal written
