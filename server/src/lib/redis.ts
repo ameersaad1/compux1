@@ -1,4 +1,5 @@
-import Redis from 'ioredis';
+import IORedisPkg from 'ioredis';
+const Redis: any = (IORedisPkg as any).default ?? IORedisPkg;
 import { env } from '../config/env.js';
 import { logger } from './logger.js';
 
