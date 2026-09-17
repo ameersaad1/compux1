@@ -1,4 +1,4 @@
-cat > /home/claude/compux/src/components/primitives.tsx << 'PEOF'
+
 import { useApp } from "../store";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -81,8 +81,4 @@ export function EmptyState({ emoji, title, sub }: { emoji: string; title: string
     </div>
   );
 }
-PEOF
-echo "primitives.tsx written"
-Output
 
-primitives.tsx written
