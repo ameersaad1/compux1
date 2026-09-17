@@ -11,7 +11,7 @@ export interface AccessTokenPayload {
 export class TokenService {
   /** Short-lived token sent as a Bearer/cookie and checked on every request. */
   static signAccessToken(payload: AccessTokenPayload): string {
-    return jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn: env.JWT_ACCESS_TTL, algorithm: 'HS256' });
+     return jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn: env.JWT_ACCESS_TTL as any, algorithm: 'HS256' });;
   }
 
   /**
