@@ -38,8 +38,8 @@ export function createApp() {
   app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
   app.use(hpp()); // strips duplicate/polluted query params (?role=user&role=admin)
   app.use(express.json({ limit: '1mb' }));
-  app.use(cookieParser());
-  app.use(pinoHttp({ logger, autoLogging: { ignore: (req) => req.url === '/health' } }));
+  app.use(cookieParser()); 
+  app.use(pinoHttp({ logger, autoLogging: { ignore: (req: any) => req.url === '/health' } }));
   app.use(apiLimiter);
 
   app.get('/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
