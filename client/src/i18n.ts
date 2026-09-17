@@ -208,8 +208,8 @@ export const en = {
   resetSuccessDesc: 'Your password has been changed. You can now log in.',
 };
 
-// يحدد نوع TKeys لتكون القيمة string مع الحفاظ على نفس المفاتيح
-export type TKeys = { [K in keyof typeof en]: string };
+// استخدام typeof en ليعتمد الأنواع الصحيحة تلقائياً لكل حقل (سواء كان string أو Array)
+export type TKeys = typeof en;
 
 export const ar: TKeys = {
   appName: 'كومبكس',
