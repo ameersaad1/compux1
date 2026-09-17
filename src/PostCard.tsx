@@ -116,9 +116,9 @@ export function PostCard({ post }: { post: Post }) {
     </article>
   );
 }
-EOF
 
-cat > /home/claude/compux/src/components/ResourceItem.tsx << 'EOF'
+
+
 import { useApp } from "../store";
 import type { Resource } from "../types";
 
@@ -152,8 +152,3 @@ export function ResourceItem({ resource: r }: { resource: Resource }) {
     </div>
   );
 }
-EOF
-echo "PostCard + ResourceItem written"
-Output
-
-PostCard + ResourceItem written
