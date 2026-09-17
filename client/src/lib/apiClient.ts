@@ -5,15 +5,18 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1';
 export class ApiClientError extends Error {
   status: number;
   code?: string;
+  error?: string;
   details?: ApiError['details'];
   /** Raw response body, in case a specific endpoint attaches extra fields (e.g. `userId`). */
   body: Record<string, unknown>;
 
-  constructor(status: number, body: ApiError & Record<string, unknown>) {
-    super(body.error);
+  constructor(status: number, body: Record<string, unknown>) {
+    const message = typeof body.error === 'string' ? body.error : 'حدث خطأ غير متوقع';
+    super(message);
     this.status = status;
-    this.code = body.code;
-    this.details = body.details;
+    this.error = message;
+    this.code = typeof body.code === 'string' ? body.code : undefined;
+    this.details = body.details as ApiError['details'];
     this.body = body;
   }
 }
@@ -41,8 +44,8 @@ class ApiClient {
 
     if (res.status === 204) return undefined as T;
 
-    const body = await res.json().catch(() => ({ error: 'استجابة غير متوقعة من الخادم.' }));
-    if (!res.ok) throw new ApiClientError(res.status, body as ApiError & Record<string, unknown>);
+    const body = (await res.json().catch(() => ({ error: 'استجابة غير متوقعة من الخادم.' }))) as Record<string, unknown>;
+    if (!res.ok) throw new ApiClientError(res.status, body);
     return body as T;
   }
 
