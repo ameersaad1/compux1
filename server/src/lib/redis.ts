@@ -8,7 +8,7 @@ export const redis = new Redis(env.REDIS_URL, {
   lazyConnect: false,
 });
 
-redis.on('error', (err) => {
+redis.on('error', (err: any) => {
   logger.error({ err }, 'Redis connection error');
 });
 
